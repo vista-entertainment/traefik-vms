@@ -1,0 +1,25 @@
+# Frontends
+[frontends]
+{% for tenant in tenants %}
+	{% for backend in tenant.backends %}
+		[frontends.frontend_{{ tenant.tenant }}_{{ backend.name }}]
+		entryPoints = ["http", "https"]
+		backend = "backend_{{ tenant.tenant }}_{{ backend.name }}"
+		passHostHeader = true
+		priority = 42
+	{% endfor %}
+{% endfor %}
+
+# Backends
+[backends]
+{% for tenant in tenants %}
+	{% for backend in tenant.backends %}
+		[backends.backend_{{ tenant.tenant }}_{{ backend.name }}]
+		[backends.backend_{{ tenant.tenant }}_{{ backend.name }}.servers]
+			{% for server in backend.servers %}
+			[backends.backend_{{ tenant.tenant }}_{{ backend.name }}.servers.server{{loop.index}}]
+			url = "{{server}}"
+			weight = 1
+			{% endfor %}
+	{% endfor %}
+{% endfor %}
