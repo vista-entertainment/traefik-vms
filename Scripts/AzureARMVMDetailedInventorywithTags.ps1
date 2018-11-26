@@ -243,7 +243,7 @@ foreach($subscription in $Subscriptions)  
  
             # Format Tags, sample: "key : Value <CarriageReturn> key : value "   TAGS keys are converted to UpperCase 
             $taglist = '' 
-            $ThisVMTags = @(' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ')  # Array of VMTags matching the $AllVMTags (Header) 
+            $ThisVMTags = @(' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ')  # Array of VMTags matching the $AllVMTags (Header) 
             $tags = $virtualmachine.Tags 
             $tKeys = $tags | select -ExpandProperty keys 
             $tvalues = $tags | select -ExpandProperty values 
@@ -390,7 +390,8 @@ foreach($subscription in $Subscriptions)  
             } 
  
             # Create custom PS objects and return all these properties for this VM 
-            [pscustomobject]@{ 
+            Write-Host "Create custom PS objects and return all these properties for this VM"
+            [pscustomobject]@{ 
                             Az_Location = $virtualmachine.Location 
                             Az_ResourceGroup = $virtualmachine.ResourceGroupName 
                             Az_Name = $virtualmachine.Name 
@@ -443,11 +444,13 @@ foreach($subscription in $Subscriptions)  
  
         # Define CSV Output Filename, use subscription name and ID as name can be duplicate 
         "9- Write VM Configuration Details to file"
-        $OutputCSV = "$OutputCSVPath$OutputCSVFile - $subscriptionName ($SubscriptionID)$outputCSVExt" 
+        #$OutputCSV = "$OutputCSVPath$OutputCSVFile - $subscriptionName ($SubscriptionID)$outputCSVExt" 
  
         #CSV Exports Virtual Machines 
+        Write-Host "Default worker Computername $($env:computername)"
         $jsonResult = $AzureVMs | ConvertTo-Json
 		Set-OctopusVariable -name "AzureVMsJson" -value $jsonResult
+
     } 
     else 
       { "[Warning]: No ARM VMs found...  Skipping remaining steps."} 
