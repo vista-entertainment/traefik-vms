@@ -10,7 +10,7 @@ echo "Get Azure VMs Json String from Octopus"
 
 echo "Generate backend rules config from tags"
 sudo apt install python-pip -y
-sudo pip install Jinja2
+pip install Jinja2
 echo $AzureVMsJson | python rules.py > rules.toml
 
 echo "Copy generated configs"
