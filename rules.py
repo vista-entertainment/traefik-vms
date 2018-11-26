@@ -69,7 +69,6 @@ def render_template():
 	file_loader = FileSystemLoader("templates")
 	env = Environment(loader=file_loader)
 	template = env.get_template('rules.j2')
-	print global_tenants
 	print(template.render(tenants=global_tenants))
 
 if __name__== "__main__":
