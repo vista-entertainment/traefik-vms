@@ -48,7 +48,7 @@ def create_jsondata(azure_vm_json_data):
 		#grab the attributes that we want from the vm
 		azure_vm_tenant = jd['TENANT']
 		azure_vm_backend = jd['BACKEND']
-		azure_vm_ip = jd['Az_VNicPublicIP']
+		azure_vm_ip = jd['Az_VNicPrivateIPs']
 
 		#fetch or create a tenant dict
 		current_tenant = get_tenant_by_name(azure_vm_tenant)

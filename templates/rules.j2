@@ -7,6 +7,10 @@
 		backend = "backend_{{ tenant.tenant }}_{{ backend.name }}"
 		passHostHeader = true
 		priority = 42
+		
+		[frontends.frontend1.routes]
+			[frontends.frontend1.routes.route0]
+			rule = "Host:{{ backend.hostname }}"
 	{% endfor %}
 {% endfor %}
 
@@ -18,8 +22,8 @@
 		[backends.backend_{{ tenant.tenant }}_{{ backend.name }}.servers]
 			{% for server in backend.servers %}
 			[backends.backend_{{ tenant.tenant }}_{{ backend.name }}.servers.server{{loop.index}}]
-			url = "{{server}}"
-			weight = 1
+			url = "http://{{server}}"
+			weight = {{loop.index}}
 			{% endfor %}
 	{% endfor %}
 {% endfor %}
