@@ -29,7 +29,7 @@ def get_tenant_by_name(tenant_name):
 	return new_tenant
 
 
-def get_backend_by_name(tenant, backend_name):
+def get_backend_by_name(tenant, backend_name, hostname = None, pathprefix = None):
 	for b in tenant['backends']:
 		if b['name'] == backend_name:
 			return b
@@ -37,6 +37,8 @@ def get_backend_by_name(tenant, backend_name):
 	#print('create backend {0}'.format(backend_name))
 	new_backend = {}
 	new_backend['name']=backend_name
+	new_backend['hostname']=hostname
+	new_backend['pathprefix']=pathprefix
 	new_backend['servers']=[]
 	tenant['backends'].append(new_backend)
 	return new_backend
@@ -48,22 +50,26 @@ def create_jsondata(azure_vm_json_data):
 		#grab the attributes that we want from the vm
 		azure_vm_tenant = jd['TENANT']
 		azure_vm_backend = jd['BACKEND']
+		azure_vm_hostname = jd['HOSTNAME']
+		azure_vm_pathprefix = jd['PATHPREFIX']
 		azure_vm_ip = jd['Az_VNicPrivateIPs']
 
 		#fetch or create a tenant dict
 		current_tenant = get_tenant_by_name(azure_vm_tenant)
 		#add to new or existing tenant
-		current_backend = get_backend_by_name(current_tenant, azure_vm_backend)
+		current_backend = get_backend_by_name(current_tenant, azure_vm_backend, azure_vm_hostname, azure_vm_pathprefix)
 
 		#add ip to server list
 		current_backend['servers'].append(azure_vm_ip)
 
+	
 	return global_tenants
 
 def render_template():
 	file_loader = FileSystemLoader("templates")
 	env = Environment(loader=file_loader)
 	template = env.get_template('rules.j2')
+	print global_tenants
 	print(template.render(tenants=global_tenants))
 
 if __name__== "__main__":

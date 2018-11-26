@@ -8,9 +8,16 @@
 		passHostHeader = true
 		priority = 42
 		
-		[frontends.frontend1.routes]
-			[frontends.frontend1.routes.route0]
+		{% if backend.hostname %}
+			[frontends.frontend1.routes.roule_host]
 			rule = "Host:{{ backend.hostname }}"
+		{% endif %}
+		
+		{% if backend.pathprefix %}
+			[frontends.frontend1.routes.roule_path]
+			rule = "PathPrefix:{{ backend.pathprefix }}"
+		{% endif %}
+		
 	{% endfor %}
 {% endfor %}
 
