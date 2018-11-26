@@ -9,12 +9,12 @@
 		priority = 42
 		
 		{% if backend.hostname %}
-			[frontends.frontend1.routes.roule_host]
+			[frontends.frontend_{{ tenant.tenant }}_{{ backend.name }}.routes.roule_host]
 			rule = "Host:{{ backend.hostname }}"
 		{% endif %}
 		
 		{% if backend.pathprefix %}
-			[frontends.frontend1.routes.roule_path]
+			[frontends.frontend_{{ tenant.tenant }}_{{ backend.name }}.routes.roule_path]
 			rule = "PathPrefix:{{ backend.pathprefix }}"
 		{% endif %}
 		
