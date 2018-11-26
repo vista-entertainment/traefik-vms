@@ -1,20 +1,20 @@
-#Â --------------------------------------------------------------------------------------------------------------Â 
-#Â THISÂ CODEÂ ANDÂ INFORMATIONÂ ISÂ PROVIDEDÂ "ASÂ IS"Â WITHOUTÂ WARRANTYÂ OFÂ ANYÂ KIND,Â Â 
-#Â EITHERÂ EXPRESSEDÂ ORÂ IMPLIED,Â INCLUDINGÂ BUTÂ NOTÂ LIMITEDÂ TOÂ THEÂ IMPLIEDÂ Â 
-#Â WARRANTIESÂ OFÂ MERCHANTABILITYÂ AND/ORÂ FITNESSÂ FORÂ AÂ PARTICULARÂ PURPOSE.Â 
-#Â 
-#Â Â TitleÂ Â Â Â Â Â Â Â Â :Â AzureARMVMDetailedInventorywithTagsÂ 
-#Â Â ProgrammedÂ byÂ :Â DenisÂ RougeauÂ 
-#Â Â DateÂ Â Â Â Â Â Â Â Â Â :Â Oct,Â 2017Â 
-#Â 
-#Â --------------------------------------------------------------------------------------------------------------Â 
+# -------------------------------------------------------------------------------------------------------------- 
+# THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,  
+# EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED  
+# WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE. 
+# 
+#  Title         : AzureARMVMDetailedInventorywithTags 
+#  Programmed by : Denis Rougeau 
+#  Date          : Oct, 2017 
+# 
+# -------------------------------------------------------------------------------------------------------------- 
 #  GET THE LATEST VERSION HERE: https://gallery.technet.microsoft.com/Azure-ARM-VM-Inventory-57ba01b7
-#Â --------------------------------------------------------------------------------------------------------------Â 
-#Â 
-#Â DemoÂ ScriptÂ toÂ createÂ AzureÂ ARMÂ VMÂ ListÂ intoÂ aÂ CSVÂ filesÂ withÂ VMÂ TagsÂ asÂ header (One file per subscription)Â 
+# -------------------------------------------------------------------------------------------------------------- 
+# 
+# Demo Script to create Azure ARM VM List into a CSV files with VM Tags as header (One file per subscription) 
 #
-#Â NOTE:Â Support for multiple NIC, IP, Public IP, Data Disks per VMs
-#       MultipleÂ valuesÂ withinÂ theÂ sameÂ fieldÂ areÂ separatedÂ byÂ "Â CarriageÂ ReturnÂ "
+# NOTE: Support for multiple NIC, IP, Public IP, Data Disks per VMs
+#       Multiple values within the same field are separated by " Carriage Return "
 #       Added support for Managed Disks and Premium disks
 #
 # Headers:
@@ -50,11 +50,11 @@
 # - Az_DataDisksRepl              -> Standard/Premium LRS/GRS/GRS-RA/...   
 # - Az_VMTags                     -> List all VM tags in one field
 # - Az_VMTag [0-14]               -> Make each VM tags it's own header in the Output
-#Â --------------------------------------------------------------------------------------------------------------Â 
+# -------------------------------------------------------------------------------------------------------------- 
 
-Import-ModuleÂ AzureÂ 
+Import-Module Azure 
 
-Â 
+ 
 # Retreive Azure Module properties
 "Validating installed PS Version and Azure PS Module version..."
 $ReqVersions = Get-Module Azure -list | Select-Object Version, PowerShellVersion
@@ -82,7 +82,7 @@ if($ReqVersions.Version.Major -lt 4)
 }
 
 # Login to Azure Resource Manager
-#Login-AzureRMAccountÂ 
+#Login-AzureRMAccount 
 # Using $OctopusParameters
 Write-Host 'AzureAccount.Id=' $OctopusParameters["azure account"]
 Write-Host 'AzureAccount.SubscriptionNumber=' $OctopusParameters["azure account.SubscriptionNumber"]
@@ -96,226 +96,226 @@ $pscredential = new-object -typename System.Management.Automation.PSCredential -
 
 Add-AzureRmAccount -Credential $pscredential -TenantId $OctopusParameters["azure account.TenantId"] -ServicePrincipal
 
-Â 
-FunctionÂ GetDiskSizeÂ ($DiskURI)Â 
-{Â 
+ 
+Function GetDiskSize ($DiskURI) 
+{ 
   # User running the script must have Read access to the VM Storage Accounts for these values to be retreive
-Â Â $error.clear()Â 
-Â Â $DiskContainerÂ =Â ($DiskURI.Split('/'))[3]Â Â 
-Â Â $DiskBlobNameÂ Â =Â ($DiskURI.Split('/'))[4]Â Â 
-Â 
+  $error.clear() 
+  $DiskContainer = ($DiskURI.Split('/'))[3]  
+  $DiskBlobName  = ($DiskURI.Split('/'))[4]  
+ 
   # Create Return PS object
   $BlobObject = @{'Name'=$DiskURI;'SkuName'=" ";'SkuTier'=" ";'DiskSize'=0}
 
-Â Â #Â AvoidÂ connectingÂ toÂ StorageÂ ifÂ lastÂ diskÂ inÂ sameÂ StorageÂ AccountÂ (SaveÂ significantÂ time!)Â 
-Â Â ifÂ ($global:DiskSAÂ -neÂ ((($DiskURI).Split('/')[2]).Split('.'))[0])Â 
-Â Â {Â 
-Â Â Â Â $global:DiskSAÂ =Â ((($DiskURI).Split('/')[2]).Split('.'))[0]Â 
-Â Â Â Â $global:SAobjÂ =Â $AllARMSAsÂ |Â where-objectÂ {$_.StorageAccountNameÂ -eqÂ $DiskSA}Â 
-Â Â Â Â $SARGÂ Â =Â $global:SAobj.ResourceGroupNameÂ 
-Â Â Â Â $SAKeysÂ Â Â Â Â =Â Get-AzureRMStorageAccountKeyÂ -ResourceGroupNameÂ $SARGÂ -NameÂ $DiskSAÂ 
-Â Â Â Â $global:SAContextÂ Â =Â New-AzureStorageContextÂ -StorageAccountNameÂ $DiskSAÂ Â -StorageAccountKeyÂ $SAKeys[0].valueÂ Â 
-Â Â }Â 
+  # Avoid connecting to Storage if last disk in same Storage Account (Save significant time!) 
+  if ($global:DiskSA -ne ((($DiskURI).Split('/')[2]).Split('.'))[0]) 
+  { 
+    $global:DiskSA = ((($DiskURI).Split('/')[2]).Split('.'))[0] 
+    $global:SAobj = $AllARMSAs | where-object {$_.StorageAccountName -eq $DiskSA} 
+    $SARG  = $global:SAobj.ResourceGroupName 
+    $SAKeys     = Get-AzureRMStorageAccountKey -ResourceGroupName $SARG -Name $DiskSA 
+    $global:SAContext  = New-AzureStorageContext -StorageAccountName $DiskSA  -StorageAccountKey $SAKeys[0].value  
+  } 
 
-Â Â $DiskObjÂ =Â get-azurestorageblobÂ -ContextÂ $SAContextÂ -ContainerÂ $DiskContainerÂ -BlobÂ $DiskBlobNameÂ 
-Â Â if($Error)Â 
-Â Â Â Â {Â Â Â 
-Â Â Â Â Â Â Â $BlobObject.DiskSizeÂ =Â -1Â Â 
-Â Â Â Â Â Â Â $error.Clear()Â 
-Â Â Â Â }Â 
-Â Â elseÂ 
-Â Â Â Â {Â 
-      [int] $DiskSize = $Diskobj.Length/1024/1024/1024 #Â GB
-      $BlobObject.DiskSizeÂ =Â $DiskSize
+  $DiskObj = get-azurestorageblob -Context $SAContext -Container $DiskContainer -Blob $DiskBlobName 
+  if($Error) 
+    {   
+       $BlobObject.DiskSize = -1  
+       $error.Clear() 
+    } 
+  else 
+    { 
+      [int] $DiskSize = $Diskobj.Length/1024/1024/1024 # GB
+      $BlobObject.DiskSize = $DiskSize
       $BlobObject.SkuName = $global:SAobj.Sku.Name
-      $BlobObject.SkuTier = $global:SAobj.Sku.TierÂ 
-    }Â Â 
-Â 
-Â Â ReturnÂ $BlobObjectÂ Â 
+      $BlobObject.SkuTier = $global:SAobj.Sku.Tier 
+    }  
+ 
+  Return $BlobObject  
 
-Â Â trapÂ {Â 
-Â Â Â Â Â Â ReturnÂ $BlobObjectÂ 
-Â Â Â Â }Â 
-}Â 
-Â 
-#Â GetÂ StartÂ TimeÂ 
-$startDTMÂ =Â (Get-Date)Â 
-"StartingÂ Script:Â {0:yyyy-MM-ddÂ HH:mm}..."Â -fÂ $startDTMÂ 
-Â 
-#Â GetÂ aÂ listÂ ofÂ allÂ subscriptionsÂ (orÂ aÂ singleÂ subscription)Â 
-#"RetrievingÂ allÂ Subscriptions..."Â 
-#$SubscriptionsÂ =Â Get-AzureRmSubscriptionÂ |Â SortÂ SubscriptionNameÂ Â Â Â 
-#Â ***Â Â NOTE:Â UncommentÂ theÂ followingÂ lineÂ ifÂ youÂ wantÂ toÂ limitÂ theÂ queryÂ toÂ aÂ specificÂ subscriptionÂ 
-$SubscriptionsÂ =Â Get-AzureRmSubscriptionÂ |Â ?Â {$_.IdÂ -eqÂ $OctopusParameters["azure account.SubscriptionNumber"]}Â 
-#"Found:Â "Â +Â $Subscriptions.CountÂ 
-Â 
-#Â RetrieveÂ allÂ availableÂ VirtualÂ MachineÂ SizesÂ 
-"`r`nRetrievingÂ allÂ availableÂ VirtualÂ MachinesÂ Sizes..."Â 
-$AllVMsSizeÂ =Â Get-AzureRmVMSizeÂ -LocationÂ "WestÂ US"Â Â #Â Â UsingÂ WestÂ USÂ andÂ SouthÂ CentralÂ USÂ andÂ EastÂ USÂ 2Â asÂ thoseÂ 2Â locationsÂ areÂ usuallyÂ theÂ onesÂ withÂ allÂ andÂ newerÂ VMÂ sizesÂ 
-$AllVMsSizeSCUÂ =Â Get-AzureRmVMSizeÂ -LocationÂ "SouthÂ CentralÂ US"Â 
-foreachÂ ($VMsSizeSCUÂ inÂ $AllVMsSizeSCU)Â 
-{Â 
-Â Â Â Â ifÂ ($AllVMsSize.NameÂ -notcontainsÂ $VMsSizeSCU.Name)Â {Â $AllVMsSizeÂ +=Â $VMsSizeSCUÂ }Â 
-}Â 
-$AllVMsSizeEU2sÂ =Â Get-AzureRmVMSizeÂ -LocationÂ "EastÂ USÂ 2"Â 
-foreachÂ ($VMsSizeEU2Â inÂ $AllVMsSizeEU2s)Â 
-{Â 
-Â Â Â Â ifÂ ($AllVMsSize.NameÂ -notcontainsÂ $VMsSizeEU2.Name)Â {Â $AllVMsSizeÂ +=Â $VMsSizeEU2Â }Â 
-}Â 
-"Found:Â "Â +Â $AllVMsSize.CountÂ 
-Â 
-#Â LoopÂ thruÂ allÂ subscriptionsÂ (hardcoded to the Octopus Account subscription)
-$AzureVMsÂ =Â @()Â 
+  trap { 
+      Return $BlobObject 
+    } 
+} 
+ 
+# Get Start Time 
+$startDTM = (Get-Date) 
+"Starting Script: {0:yyyy-MM-dd HH:mm}..." -f $startDTM 
+ 
+# Get a list of all subscriptions (or a single subscription) 
+#"Retrieving all Subscriptions..." 
+#$Subscriptions = Get-AzureRmSubscription | Sort SubscriptionName    
+# ***  NOTE: Uncomment the following line if you want to limit the query to a specific subscription 
+$Subscriptions = Get-AzureRmSubscription | ? {$_.Id -eq $OctopusParameters["azure account.SubscriptionNumber"]} 
+#"Found: " + $Subscriptions.Count 
+ 
+# Retrieve all available Virtual Machine Sizes 
+"`r`nRetrieving all available Virtual Machines Sizes..." 
+$AllVMsSize = Get-AzureRmVMSize -Location "West US"  #  Using West US and South Central US and East US 2 as those 2 locations are usually the ones with all and newer VM sizes 
+$AllVMsSizeSCU = Get-AzureRmVMSize -Location "South Central US" 
+foreach ($VMsSizeSCU in $AllVMsSizeSCU) 
+{ 
+    if ($AllVMsSize.Name -notcontains $VMsSizeSCU.Name) { $AllVMsSize += $VMsSizeSCU } 
+} 
+$AllVMsSizeEU2s = Get-AzureRmVMSize -Location "East US 2" 
+foreach ($VMsSizeEU2 in $AllVMsSizeEU2s) 
+{ 
+    if ($AllVMsSize.Name -notcontains $VMsSizeEU2.Name) { $AllVMsSize += $VMsSizeEU2 } 
+} 
+"Found: " + $AllVMsSize.Count 
+ 
+# Loop thru all subscriptions (hardcoded to the Octopus Account subscription)
+$AzureVMs = @() 
 
-foreach($subscriptionÂ inÂ $Subscriptions)Â Â 
-{Â 
-Â Â Â Â $SubscriptionIDÂ =Â $Subscription.IdÂ Â 
-Â Â Â Â $SubscriptionNameÂ =Â $Subscription.NameÂ 
-Â Â Â Â "`r`nQueryingÂ Subscription: $SubscriptionName ($SubscriptionID)"Â 
-Â Â Â Â Select-AzureRmSubscriptionÂ -SubscriptionIdÂ $SubscriptionIDÂ | Out-Null
+foreach($subscription in $Subscriptions)  
+{ 
+    $SubscriptionID = $Subscription.Id  
+    $SubscriptionName = $Subscription.Name 
+    "`r`nQuerying Subscription: $SubscriptionName ($SubscriptionID)" 
+    Select-AzureRmSubscription -SubscriptionId $SubscriptionID | Out-Null
 
-Â Â Â Â #Â RetrieveÂ allÂ PublicÂ IPsÂ 
-Â Â Â Â "1-Â RetrievingÂ allÂ PublicÂ IPs..."Â 
-Â Â Â Â $AllPublicIPsÂ =Â get-azurermpublicipaddressÂ 
-Â Â Â Â "Â Â Â Found:Â "Â +Â $AllPublicIPs.CountÂ 
-Â 
-Â Â Â Â #Â RetrieveÂ allÂ VirtualÂ NetworksÂ 
-Â Â Â Â "2-Â RetrievingÂ allÂ VirtualÂ Networks..."Â 
-Â Â Â Â $AllVirtualNetworksÂ =Â get-azurermvirtualnetworkÂ 
-Â Â Â Â "Â Â Â Found:Â "Â +Â $AllVirtualNetworks.CountÂ 
-Â 
- 	$jsonAllVirtualNetworksÂ =Â $AllVirtualNetworks | ConvertTo-Json
+    # Retrieve all Public IPs 
+    "1- Retrieving all Public IPs..." 
+    $AllPublicIPs = get-azurermpublicipaddress 
+    "   Found: " + $AllPublicIPs.Count 
+ 
+    # Retrieve all Virtual Networks 
+    "2- Retrieving all Virtual Networks..." 
+    $AllVirtualNetworks = get-azurermvirtualnetwork 
+    "   Found: " + $AllVirtualNetworks.Count 
+ 
+ 	$jsonAllVirtualNetworks = $AllVirtualNetworks | ConvertTo-Json
 	Set-OctopusVariable -name "AzureVirtualNetworksJson" -value $jsonAllVirtualNetworks
  
-Â Â Â Â #Â RetrieveÂ allÂ NetworkÂ InterfacesÂ 
-Â Â Â Â "3-Â RetrievingÂ allÂ NetworkÂ Interfaces..."Â 
-Â Â Â Â $AllNetworkInterfacesÂ =Â Get-AzureRmNetworkInterfaceÂ 
-Â Â Â Â "Â Â Â Found:Â "Â +Â $AllNetworkInterfaces.CountÂ 
-Â Â 
-Â Â Â Â #Â RetrieveÂ allÂ ARMÂ VirtualÂ MachinesÂ 
-Â Â Â Â "4-Â RetrievingÂ allÂ ARMÂ VirtualÂ Machines..."Â 
-Â Â Â Â $AllARMVirtualMachinesÂ =Â get-azurermvmÂ |Â SortÂ location,resourcegroupname,nameÂ 
-Â Â Â Â "Â Â Â Found:Â "Â +Â $AllARMVirtualMachines.CountÂ 
-Â 
-Â Â Â Â #Â SkipÂ furtherÂ stepsÂ ifÂ noÂ ARMÂ VMÂ foundÂ 
-Â Â Â Â if($AllARMVirtualMachines.CountÂ -gtÂ 0)Â 
-Â Â Â Â {Â 
-Â 
-Â Â Â Â Â Â Â Â #Â IntitializeÂ StorageÂ AccountÂ ContextÂ variableÂ 
-Â Â Â Â Â Â Â Â $global:DiskSAÂ =Â ""Â 
-Â 
-Â Â Â Â Â Â Â Â #Â RetrieveÂ allÂ ARMÂ StorageÂ AccountsÂ 
-Â Â Â Â Â Â Â Â "5-Â RetrievingÂ allÂ ARMÂ StorageÂ Accounts..."Â 
-Â Â Â Â Â Â Â Â $AllARMSAsÂ =Â Get-AzureRmStorageAccountÂ 
-Â Â Â Â Â Â Â Â "Â Â Â Found:Â "Â +Â $AllARMSAs.CountÂ 
-Â 
-    Â Â Â Â #Â RetrieveÂ allÂ Managed DisksÂ 
-    Â Â Â Â "6-Â RetrievingÂ allÂ Managed Disks..."Â 
-Â Â Â Â     $AllMAnagedDisksÂ =Â Get-AzureRmDiskÂ 
-    Â Â Â Â "Â Â Â Found:Â "Â +Â $AllManagedDisks.CountÂ 
+    # Retrieve all Network Interfaces 
+    "3- Retrieving all Network Interfaces..." 
+    $AllNetworkInterfaces = Get-AzureRmNetworkInterface 
+    "   Found: " + $AllNetworkInterfaces.Count 
+  
+    # Retrieve all ARM Virtual Machines 
+    "4- Retrieving all ARM Virtual Machines..." 
+    $AllARMVirtualMachines = get-azurermvm | Sort location,resourcegroupname,name 
+    "   Found: " + $AllARMVirtualMachines.Count 
+ 
+    # Skip further steps if no ARM VM found 
+    if($AllARMVirtualMachines.Count -gt 0) 
+    { 
+ 
+        # Intitialize Storage Account Context variable 
+        $global:DiskSA = "" 
+ 
+        # Retrieve all ARM Storage Accounts 
+        "5- Retrieving all ARM Storage Accounts..." 
+        $AllARMSAs = Get-AzureRmStorageAccount 
+        "   Found: " + $AllARMSAs.Count 
+ 
+        # Retrieve all Managed Disks 
+        "6- Retrieving all Managed Disks..." 
+        $AllMAnagedDisks = Get-AzureRmDisk 
+        "   Found: " + $AllManagedDisks.Count 
 
-Â Â Â Â Â Â Â Â #Â RetrieveÂ allÂ ARMÂ VirtualÂ MachineÂ tagsÂ 
-Â Â Â Â Â Â Â Â "7-Â CapturingÂ allÂ ARMÂ VirtualÂ MachinesÂ Tags..."Â 
-Â Â Â Â Â Â Â Â $AllVMTagsÂ =Â Â @()Â 
-Â Â Â Â Â Â Â Â foreachÂ ($virtualmachineÂ inÂ $AllARMVirtualMachines)Â 
-Â Â Â Â Â Â Â Â {Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $tagsÂ =Â $virtualmachine.TagsÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $tKeysÂ =Â $tagsÂ |Â selectÂ -ExpandPropertyÂ keysÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â foreachÂ ($tkeyÂ inÂ $tkeys)Â 
-Â Â Â Â Â Â Â Â Â Â Â Â {Â 
+        # Retrieve all ARM Virtual Machine tags 
+        "7- Capturing all ARM Virtual Machines Tags..." 
+        $AllVMTags =  @() 
+        foreach ($virtualmachine in $AllARMVirtualMachines) 
+        { 
+            $tags = $virtualmachine.Tags 
+            $tKeys = $tags | select -ExpandProperty keys 
+            foreach ($tkey in $tkeys) 
+            { 
               
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â ifÂ ($AllVMTagsÂ -notcontainsÂ $tkey.ToUpper())Â {Â $AllVMTagsÂ +=Â $tkey.ToUpper()Â }Â 
-Â Â Â Â Â Â Â Â Â Â Â Â }Â 
-Â Â Â Â Â Â Â Â }Â 
-Â Â Â Â Â Â Â Â "Â Â Â Found:Â "Â +Â $AllVMTags.CountÂ 
-Â Â 
-Â Â Â Â Â Â Â Â #Â ThisÂ scriptÂ supportÂ upÂ toÂ 15Â VMÂ Tags,Â IncreasingÂ $ALLVMTagsÂ arrayÂ toÂ supportÂ upÂ toÂ 15Â ifÂ lessÂ thenÂ 15Â foundÂ 
-Â Â Â Â Â Â Â Â for($i=$($AllVMTags.Count);$iÂ -ltÂ 15;Â $i++)Â {Â $AllVMTagsÂ +=Â "Az_VMTag$i"Â Â }Â #DefaultÂ HeaderÂ valueÂ Â 
-Â 
-Â Â Â Â Â Â Â Â #Â CapturingÂ allÂ ARMÂ VMÂ ConfigurationsÂ detailsÂ 
-Â Â Â Â Â Â Â Â "8-Â CapturingÂ allÂ ARMÂ VMÂ ConfigurationÂ Details...Â Â Â Â Â (ThisÂ mayÂ takeÂ aÂ fewÂ minutes)"Â 
- Â Â Â Â Â Â Â $AzureVMs = foreachÂ ($virtualmachineÂ inÂ $AllARMVirtualMachines)Â 
-Â        {Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $locationÂ =Â $virtualmachine.LocationÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $rgnameÂ =Â $virtualmachine.ResourceGroupNameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $vmnameÂ =Â $virtualmachine.NameÂ 
+              if ($AllVMTags -notcontains $tkey.ToUpper()) { $AllVMTags += $tkey.ToUpper() } 
+            } 
+        } 
+        "   Found: " + $AllVMTags.Count 
+  
+        # This script support up to 15 VM Tags, Increasing $ALLVMTags array to support up to 15 if less then 15 found 
+        for($i=$($AllVMTags.Count);$i -lt 15; $i++) { $AllVMTags += "Az_VMTag$i"  } #Default Header value  
+ 
+        # Capturing all ARM VM Configurations details 
+        "8- Capturing all ARM VM Configuration Details...     (This may take a few minutes)" 
+        $AzureVMs = foreach ($virtualmachine in $AllARMVirtualMachines) 
+        { 
+            $location = $virtualmachine.Location 
+            $rgname = $virtualmachine.ResourceGroupName 
+            $vmname = $virtualmachine.Name 
             $vmavzone = $virtualmachine.Zones[0]
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â FormatÂ Tags,Â sample:Â "keyÂ :Â ValueÂ <CarriageReturn>Â keyÂ :Â valueÂ "Â   TAGS keys are converted to UpperCase 
-Â Â Â Â Â Â Â Â Â Â Â Â $taglistÂ =Â ''Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $ThisVMTagsÂ =Â @(' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ')Â Â #Â ArrayÂ ofÂ VMTagsÂ matchingÂ theÂ $AllVMTagsÂ (Header)Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $tagsÂ =Â $virtualmachine.TagsÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $tKeysÂ =Â $tagsÂ |Â selectÂ -ExpandPropertyÂ keysÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $tvaluesÂ =Â $tagsÂ |Â selectÂ -ExpandPropertyÂ valuesÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â if($tags.CountÂ -eqÂ 1)Â Â 
-Â Â Â Â Â Â Â Â Â Â Â Â {Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $taglistÂ =Â $tkeys+":"+$tvaluesÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $ndxÂ =Â [array]::IndexOf($AllVMTags,$tKeys.ToUpper())Â Â #Â FindÂ positionÂ ofÂ headerÂ matchingÂ theÂ TagÂ keyÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $ThisVMTags[$ndx]Â =Â $tvaluesÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â }Â 
-Â Â Â Â Â Â Â Â Â Â Â Â elseÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â {Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â ForÂ ($i=0;Â $iÂ -ltÂ $tags.count;Â $i++)Â Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â {Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $tkeyÂ =Â $tkeys[$i]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $tvalueÂ =Â $tvalues[$i]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $taglistÂ =Â $taglist+$tkey+":"+$tvalue+"`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $ndxÂ =Â [array]::IndexOf($AllVMTags,$tKey.ToUpper())Â Â Â #Â FindÂ positionÂ ofÂ headerÂ matchingÂ theÂ TagÂ keyÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $ThisVMTags[$ndx]Â =Â $tvalueÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â }Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â }Â 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â GetÂ VMÂ StatusÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $StatusÂ =Â get-azurermvmÂ -StatusÂ -ResourceGroupNameÂ "$rgname"Â -NameÂ "$vmname"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $vmstatusÂ =Â Â $Status.Statuses[1].DisplayStatusÂ 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â GetÂ AvailabilityÂ SetÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $AllRGASetsÂ =Â get-azurermavailabilitysetÂ -ResourceGroupNameÂ $rgnameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $VMASetÂ =Â $AllRGASetsÂ |Â Where-ObjectÂ {$_.idÂ -eqÂ $virtualmachine.AvailabilitySetReference.Id}Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $ASetÂ =Â $VMASet.NameÂ 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â GetÂ NumberÂ ofÂ CoresÂ andÂ MemoryÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $VMSizeÂ =Â $AllVMsSizeÂ |Â Where-objectÂ {$_.NameÂ -eqÂ $virtualmachine.HardwareProfile.VmSize}Â Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $VMCoresÂ =Â $VMSize.NumberOfCoresÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $VMMemÂ =Â $VMSize.MemoryInMB/1024Â 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â GetÂ VMÂ NetworkÂ Interface(s)Â andÂ propertiesÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â $MatchingNicÂ =Â ""Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $NICNameÂ =Â @()
-            $NICProvState = @()Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $NICPrivateIPÂ =Â @()Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $NICPrivateAllocationMethodÂ =Â @()Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $NICVNetÂ =Â @()Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $NICSubnetÂ =Â @()Â 
-Â Â Â Â Â Â Â Â Â Â Â Â foreach($vnicÂ inÂ $VirtualMachine.NetworkProfile.NetworkInterfaces)Â 
-Â Â Â Â Â Â Â Â Â Â Â Â {Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $MatchingNicÂ =Â $AllNetworkInterfacesÂ |Â where-objectÂ {$_.idÂ -eqÂ $vnic.id}Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICNameÂ +=Â $MatchingNic.NameÂ 
+ 
+            # Format Tags, sample: "key : Value <CarriageReturn> key : value "   TAGS keys are converted to UpperCase 
+            $taglist = '' 
+            $ThisVMTags = @(' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ')  # Array of VMTags matching the $AllVMTags (Header) 
+            $tags = $virtualmachine.Tags 
+            $tKeys = $tags | select -ExpandProperty keys 
+            $tvalues = $tags | select -ExpandProperty values 
+            if($tags.Count -eq 1)  
+            { 
+                  $taglist = $tkeys+":"+$tvalues 
+                  $ndx = [array]::IndexOf($AllVMTags,$tKeys.ToUpper())  # Find position of header matching the Tag key 
+                  $ThisVMTags[$ndx] = $tvalues 
+            } 
+            else 
+              { 
+                For ($i=0; $i -lt $tags.count; $i++)  
+                { 
+                  $tkey = $tkeys[$i] 
+                  $tvalue = $tvalues[$i] 
+                  $taglist = $taglist+$tkey+":"+$tvalue+"`n" 
+                  $ndx = [array]::IndexOf($AllVMTags,$tKey.ToUpper())   # Find position of header matching the Tag key 
+                  $ThisVMTags[$ndx] = $tvalue 
+                } 
+              } 
+ 
+            # Get VM Status 
+            $Status = get-azurermvm -Status -ResourceGroupName "$rgname" -Name "$vmname" 
+            $vmstatus =  $Status.Statuses[1].DisplayStatus 
+ 
+            # Get Availability Set 
+            $AllRGASets = get-azurermavailabilityset -ResourceGroupName $rgname 
+            $VMASet = $AllRGASets | Where-Object {$_.id -eq $virtualmachine.AvailabilitySetReference.Id} 
+            $ASet = $VMASet.Name 
+ 
+            # Get Number of Cores and Memory 
+            $VMSize = $AllVMsSize | Where-object {$_.Name -eq $virtualmachine.HardwareProfile.VmSize}  
+            $VMCores = $VMSize.NumberOfCores 
+            $VMMem = $VMSize.MemoryInMB/1024 
+ 
+            # Get VM Network Interface(s) and properties 
+            $MatchingNic = "" 
+            $NICName = @()
+            $NICProvState = @() 
+            $NICPrivateIP = @() 
+            $NICPrivateAllocationMethod = @() 
+            $NICVNet = @() 
+            $NICSubnet = @() 
+            foreach($vnic in $VirtualMachine.NetworkProfile.NetworkInterfaces) 
+            { 
+                $MatchingNic = $AllNetworkInterfaces | where-object {$_.id -eq $vnic.id} 
+                $NICName += $MatchingNic.Name 
                 $NICProvState += $MatchingNic.ProvisioningState
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICPrivateIPÂ +=Â $MatchingNic.IpConfigurations.PrivateIpAddressÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICPrivateAllocationMethodÂ +=Â $MatchingNic.IpConfigurations.PrivateIpAllocationMethodÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICSubnetIDÂ =Â $MatchingNic.IpConfigurations.Subnet.IdÂ 
-Â Â Â Â Â Â Â Â Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â #Â IdentifyingÂ theÂ VMÂ VnetÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $VMVNetÂ =Â $AllVirtualNetworksÂ |Â where-objectÂ {$_.Subnets.idÂ -eqÂ $NICSubnetIDÂ }Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICVnetÂ +=Â $VMVNet.NameÂ 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â #Â IdentifyingÂ theÂ VMÂ subnetÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVNetSubnetsÂ =Â $VMVNet.SubnetsÂ Â Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $vmSubnetÂ =Â $AllVNetSubnetsÂ |Â where-objectÂ {$_.idÂ -eqÂ $NICSubnetIDÂ }Â Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICSubnetÂ +=Â $vmSubnet.NameÂ 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â #Â IdentifyingÂ PublicÂ IPÂ AddressÂ assignedÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $VMPublicIPIDÂ =Â $MatchingNic.IpConfigurations.PublicIpAddress.IdÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $VMPublicIPÂ =Â $AllPublicIPsÂ |Â where-objectÂ {$_.idÂ -eqÂ $VMPublicIPIDÂ }Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICPublicIPÂ =Â $VMPublicIP.IPAddressÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $NICPublicAllocationMethodÂ =Â $VMPublicIP.PublicIpAllocationMethodÂ 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â }Â 
+                $NICPrivateIP += $MatchingNic.IpConfigurations.PrivateIpAddress 
+                $NICPrivateAllocationMethod += $MatchingNic.IpConfigurations.PrivateIpAllocationMethod 
+                $NICSubnetID = $MatchingNic.IpConfigurations.Subnet.Id 
+         
+                # Identifying the VM Vnet 
+                $VMVNet = $AllVirtualNetworks | where-object {$_.Subnets.id -eq $NICSubnetID } 
+                $NICVnet += $VMVNet.Name 
+ 
+                # Identifying the VM subnet 
+                $AllVNetSubnets = $VMVNet.Subnets   
+                $vmSubnet = $AllVNetSubnets | where-object {$_.id -eq $NICSubnetID }  
+                $NICSubnet += $vmSubnet.Name 
+ 
+                # Identifying Public IP Address assigned 
+                $VMPublicIPID = $MatchingNic.IpConfigurations.PublicIpAddress.Id 
+                $VMPublicIP = $AllPublicIPs | where-object {$_.id -eq $VMPublicIPID } 
+                $NICPublicIP = $VMPublicIP.IPAddress 
+                $NICPublicAllocationMethod = $VMPublicIP.PublicIpAllocationMethod 
+ 
+            } 
 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â GetÂ VMÂ OS DiskÂ propertiesÂ 
-            $OSDiskName =Â ''Â 
-Â Â Â Â Â Â Â Â Â Â Â Â $OSDiskSizeÂ =Â 0
+            # Get VM OS Disk properties 
+            $OSDiskName = '' 
+            $OSDiskSize = 0
             $OSDiskRepl = '' 
             $OSDiskTier = ''
             $OSDiskHCache = ''  # Init/Reset
@@ -325,36 +325,36 @@ foreach($subscriptionÂ inÂ $Subscriptions)Â Â 
 
             # Check if OSDisk uses Storage Account
             if($virtualmachine.StorageProfile.OsDisk.ManagedDisk -eq $null)
-Â Â Â Â Â Â Â Â Â Â Â Â {
-                #Â RetreiveÂ OS DiskÂ Replication Setting, tier (Standard or Premium) and SizeÂ 
-    Â Â Â Â Â Â Â Â Â Â Â Â $VMOSDiskObjÂ =Â GetDiskSizeÂ $virtualmachine.StorageProfile.OsDisk.Vhd.uri
-             Â   $OSDiskName =Â $VMOSDiskObj.NameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $OSDiskSizeÂ =Â $VMOSDiskObj.DiskSize
+            {
+                # Retreive OS Disk Replication Setting, tier (Standard or Premium) and Size 
+                $VMOSDiskObj = GetDiskSize $virtualmachine.StorageProfile.OsDisk.Vhd.uri
+                $OSDiskName = $VMOSDiskObj.Name 
+                $OSDiskSize = $VMOSDiskObj.DiskSize
                 $OSDiskRepl = $VMOSDiskObj.SkuName 
                 $OSDiskTier = "Unmanaged"
             }
             else
             {
                 $OSDiskID = $virtualmachine.StorageProfile.OsDisk.ManagedDisk.Id
-                $VMOSDiskObjÂ =Â $AllMAnagedDisks | where-objectÂ {$_.idÂ -eqÂ $OSDiskIDÂ }
-             Â   $OSDiskName =Â $VMOSDiskObj.NameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $OSDiskSizeÂ =Â $VMOSDiskObj.DiskSizeGB
+                $VMOSDiskObj = $AllMAnagedDisks | where-object {$_.id -eq $OSDiskID }
+                $OSDiskName = $VMOSDiskObj.Name 
+                $OSDiskSize = $VMOSDiskObj.DiskSizeGB
                 $OSDiskRepl = $VMOSDiskObj.AccountType
                 $OSDiskTier = "Managed"
             }
 
             $AllVMDisksPremium = $true 
-Â            if($OSDiskRepl -notmatch "Premium") { $AllVMDisksPremium = $false }Â 
+            if($OSDiskRepl -notmatch "Premium") { $AllVMDisksPremium = $false } 
 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â GetÂ VMÂ Data DisksÂ and their propertiesÂ 
+            # Get VM Data Disks and their properties 
             $DataDiskObj = @()
-Â Â Â Â Â Â Â Â Â Â Â Â $VMDataDisksObjÂ =Â @()Â 
-Â Â Â Â Â Â Â Â Â Â Â Â foreach($DataDiskÂ inÂ $virtualmachine.StorageProfile.DataDisks)Â 
-Â Â Â Â Â Â Â Â Â Â Â Â {Â 
+            $VMDataDisksObj = @() 
+            foreach($DataDisk in $virtualmachine.StorageProfile.DataDisks) 
+            { 
 
               # Initialize variable before each iteration
-    Â Â Â Â Â Â Â Â Â Â $VMDataDiskName =Â ''
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â $VMDataDiskSizeÂ =Â 0
+              $VMDataDiskName = ''
+              $VMDataDiskSize = 0
               $VMDataDiskRepl = ''
               $VMDataDiskTier = ''
               $VMDataDiskHCache = '' # Init/Reset 
@@ -364,20 +364,20 @@ foreach($subscriptionÂ inÂ $Subscriptions)Â Â 
               
               # Check if this DataDisk uses Storage Account
               if($DataDisk.ManagedDisk -eq $null)
-Â Â Â Â Â Â Â Â Â Â Â Â   {
-                #Â RetreiveÂ OS DiskÂ Replication Setting, tier (Standard or Premium) and SizeÂ 
-    Â Â Â Â Â Â Â Â Â Â Â Â $VMDataDiskObjÂ =Â GetDiskSizeÂ $DataDisk.vhd.uriÂ 
-             Â   $VMDataDiskName =Â $VMDataDiskObj.Name
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $VMDataDiskSizeÂ =Â $VMDataDiskObj.DiskSize
+              {
+                # Retreive OS Disk Replication Setting, tier (Standard or Premium) and Size 
+                $VMDataDiskObj = GetDiskSize $DataDisk.vhd.uri 
+                $VMDataDiskName = $VMDataDiskObj.Name
+                $VMDataDiskSize = $VMDataDiskObj.DiskSize
                 $VMDataDiskRepl = $VMDataDiskObj.SkuName
                 $VMDataDiskTier = "Unmanaged"
               }
               else
               {
                 $DataDiskID = $DataDisk.ManagedDisk.Id
-                $VMDataDiskObjÂ =Â $AllMAnagedDisks | where-objectÂ {$_.idÂ -eqÂ $DataDiskIDÂ }
-             Â   $VMDataDiskName =Â $VMDataDiskObj.Name
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $VMDataDiskSizeÂ =Â $VMDataDiskObj.DiskSizeGB
+                $VMDataDiskObj = $AllMAnagedDisks | where-object {$_.id -eq $DataDiskID }
+                $VMDataDiskName = $VMDataDiskObj.Name
+                $VMDataDiskSize = $VMDataDiskObj.DiskSizeGB
                 $VMDataDiskRepl = $VMDataDiskObj.AccountType
                 $VMDataDiskTier = "Managed"
               }
@@ -385,91 +385,91 @@ foreach($subscriptionÂ inÂ $Subscriptions)Â Â 
               # Add Data Disk properties to arrray of Data disks object
               $DataDiskObj += @([pscustomobject]@{'Name'=$VMDataDiskName;'HostCache'=$VMDataDiskHCache;'Size'=$VMDataDiskSize;'Repl'=$VMDataDiskRepl;'Tier'=$VMDataDiskTier})
 
-Â              # Check if this datadisk is a premium disk.  If not, set the all Premium disks to false (No SLA)
-              if($VMDataDiskRepl -notmatch "Premium") { $AllVMDisksPremium = $false }Â 
-Â Â Â Â Â Â Â Â Â Â Â Â }Â 
-Â 
-Â Â Â Â Â Â Â Â Â Â Â Â #Â CreateÂ customÂ PSÂ objectsÂ andÂ returnÂ allÂ theseÂ propertiesÂ forÂ thisÂ VMÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Write-Host "CreateÂ customÂ PSÂ objectsÂ andÂ returnÂ allÂ theseÂ propertiesÂ forÂ thisÂ VM"
-            [pscustomobject]@{Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_LocationÂ =Â $virtualmachine.LocationÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_ResourceGroupÂ =Â $virtualmachine.ResourceGroupNameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_NameÂ =Â $virtualmachine.NameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_StatusÂ =Â $vmstatusÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_StatuscodeÂ =Â $virtualmachine.StatusCode
-                            AZ_AvZone = $vmavzoneÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_AvSetÂ =Â $ASetÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_SizeÂ =Â $virtualmachine.HardwareProfile.VmSizeÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_CoresÂ =Â $VMCoresÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_MemoryÂ =Â $VMMemÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_OSTypeÂ =Â $virtualmachine.StorageProfile.OsDisk.OsTypeÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VNicNamesÂ =Â $NICNameÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VNicProvisioningStateÂ =Â $NICProvStateÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VNicPrivateIPsÂ =Â $NICPrivateIPÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_vNicPrivateIPAllocMethodsÂ =Â $NICPrivateAllocationMethodÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VirtualNetworksÂ =Â $NICVnetÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_SubnetsÂ =Â $NICSubnetÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VNicPublicIPÂ =Â $NICPublicIPÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VNicPublicIPAllocMethodÂ =Â $NICPublicAllocationMethodÂ 
+              # Check if this datadisk is a premium disk.  If not, set the all Premium disks to false (No SLA)
+              if($VMDataDiskRepl -notmatch "Premium") { $AllVMDisksPremium = $false } 
+            } 
+ 
+            # Create custom PS objects and return all these properties for this VM 
+            Write-Host "Create custom PS objects and return all these properties for this VM"
+            [pscustomobject]@{ 
+                            Az_Location = $virtualmachine.Location 
+                            Az_ResourceGroup = $virtualmachine.ResourceGroupName 
+                            Az_Name = $virtualmachine.Name 
+                            Az_Status = $vmstatus 
+                            Az_Statuscode = $virtualmachine.StatusCode
+                            AZ_AvZone = $vmavzone 
+                            Az_AvSet = $ASet 
+                            Az_Size = $virtualmachine.HardwareProfile.VmSize 
+                            Az_Cores = $VMCores 
+                            Az_Memory = $VMMem 
+                            Az_OSType = $virtualmachine.StorageProfile.OsDisk.OsType 
+                            Az_VNicNames = $NICName -join "`n" 
+                            Az_VNicProvisioningState = $NICProvState -join "`n" 
+                            Az_VNicPrivateIPs = $NICPrivateIP -join "`n" 
+                            Az_vNicPrivateIPAllocMethods = $NICPrivateAllocationMethod -join "`n" 
+                            Az_VirtualNetworks = $NICVnet -join "`n" 
+                            Az_Subnets = $NICSubnet -join "`n" 
+                            Az_VNicPublicIP = $NICPublicIP 
+                            Az_VNicPublicIPAllocMethod = $NICPublicAllocationMethod 
                             Az_VM_Instance_SLA = $AllVMDisksPremium
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_OSDiskÂ =Â $OSDiskNameÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_OSDiskHCacheÂ =Â $OSDiskHCache
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_OSDiskSizeÂ =Â $OSDiskSize
-                            Az_OSDiskTier = $OSDiskTier Â 
+                            Az_OSDisk = $OSDiskName 
+                            Az_OSDiskHCache = $OSDiskHCache
+                            Az_OSDiskSize = $OSDiskSize
+                            Az_OSDiskTier = $OSDiskTier  
                             Az_OSDiskRepl = $OSDiskRepl 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_DataDisksÂ =Â $DataDiskObj.NameÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_DataDisksHCacheÂ =Â $DataDiskObj.HostCacheÂ -joinÂ "`n"Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_DataDisksSizeÂ =Â $DataDiskObj.SizeÂ -joinÂ "`n"Â 
-                            Az_DataDisksTier = $DataDiskObj.Tier -joinÂ "`n"
-                            Az_DataDisksRepl = $DataDiskObj.Repl -joinÂ "`n"
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Az_VMTagsÂ =Â $taglistÂ 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[0]Â =Â $ThisVMTags[0]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[1]Â =Â $ThisVMTags[1]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[2]Â =Â $ThisVMTags[2]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[3]Â =Â $ThisVMTags[3]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[4]Â =Â $ThisVMTags[4]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[5]Â =Â $ThisVMTags[5]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[6]Â =Â $ThisVMTags[6]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[7]Â =Â $ThisVMTags[7]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[8]Â =Â $ThisVMTags[8]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[9]Â =Â $ThisVMTags[9]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[10]Â =Â $ThisVMTags[10]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[11]Â =Â $ThisVMTags[11]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[12]Â =Â $ThisVMTags[12]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[13]Â =Â $ThisVMTags[13]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â $AllVMTags[14]Â =Â $ThisVMTags[14]Â 
-Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â Â }Â 
-Â 
-Â Â Â Â Â Â Â Â }Â  #ArrayÂ $AzureVMsÂ 
-Â 
-Â Â Â Â Â Â Â Â #Â DefineÂ CSVÂ OutputÂ Filename,Â useÂ subscriptionÂ nameÂ andÂ IDÂ asÂ nameÂ canÂ beÂ duplicateÂ 
-Â Â Â Â Â Â Â Â "9-Â WriteÂ VMÂ ConfigurationÂ Details to file"
-        #$OutputCSVÂ =Â "$OutputCSVPath$OutputCSVFileÂ -Â $subscriptionNameÂ ($SubscriptionID)$outputCSVExt"Â 
-Â 
-Â Â Â Â Â Â Â Â #CSVÂ ExportsÂ VirtualÂ MachinesÂ 
+                            Az_DataDisks = $DataDiskObj.Name -join "`n" 
+                            Az_DataDisksHCache = $DataDiskObj.HostCache -join "`n" 
+                            Az_DataDisksSize = $DataDiskObj.Size -join "`n" 
+                            Az_DataDisksTier = $DataDiskObj.Tier -join "`n"
+                            Az_DataDisksRepl = $DataDiskObj.Repl -join "`n"
+                            Az_VMTags = $taglist 
+                            $AllVMTags[0] = $ThisVMTags[0] 
+                            $AllVMTags[1] = $ThisVMTags[1] 
+                            $AllVMTags[2] = $ThisVMTags[2] 
+                            $AllVMTags[3] = $ThisVMTags[3] 
+                            $AllVMTags[4] = $ThisVMTags[4] 
+                            $AllVMTags[5] = $ThisVMTags[5] 
+                            $AllVMTags[6] = $ThisVMTags[6] 
+                            $AllVMTags[7] = $ThisVMTags[7] 
+                            $AllVMTags[8] = $ThisVMTags[8] 
+                            $AllVMTags[9] = $ThisVMTags[9] 
+                            $AllVMTags[10] = $ThisVMTags[10] 
+                            $AllVMTags[11] = $ThisVMTags[11] 
+                            $AllVMTags[12] = $ThisVMTags[12] 
+                            $AllVMTags[13] = $ThisVMTags[13] 
+                            $AllVMTags[14] = $ThisVMTags[14] 
+                         } 
+ 
+        }  #Array $AzureVMs 
+ 
+        # Define CSV Output Filename, use subscription name and ID as name can be duplicate 
+        "9- Write VM Configuration Details to file"
+        #$OutputCSV = "$OutputCSVPath$OutputCSVFile - $subscriptionName ($SubscriptionID)$outputCSVExt" 
+ 
+        #CSV Exports Virtual Machines 
         Write-Host "Default worker Computername $($env:computername)"
-        $jsonResultÂ =Â $AzureVMs | ConvertTo-Json
+        $jsonResult = $AzureVMs | ConvertTo-Json
 		Set-OctopusVariable -name "AzureVMsJson" -value $jsonResult
 
-Â Â Â Â }Â 
-Â Â Â Â elseÂ 
-Â Â Â Â Â Â {Â "[Warning]:Â NoÂ ARMÂ VMsÂ found...Â Â SkippingÂ remainingÂ steps."}Â 
-}Â Â #Â SubscriptionsÂ 
-Â 
-"`r`nCompleted!"Â 
-Â 
-#Â GetÂ EndÂ TimeÂ 
-$endDTMÂ =Â (Get-Date)Â 
-"StoppingÂ Script:Â {0:yyyy-MM-ddÂ HH:mm}..."Â -fÂ $endDTMÂ 
-Â 
-#Â EchoÂ TimeÂ elapsedÂ 
-"ElapsedÂ Time:Â $(($endDTM-$startDTM).totalseconds)Â seconds"Â 
-Â 
-#Â CatchÂ anyÂ unexpectedÂ errorÂ occurringÂ whileÂ runningÂ theÂ scriptÂ 
-trapÂ {Â 
-Â Â Â Â Write-HostÂ "AnÂ unexpectedÂ errorÂ occurred....Â Â PleaseÂ tryÂ againÂ inÂ aÂ fewÂ minutes..."Â Â Â 
-Â Â Â Â Write-HostÂ $("`Exception:Â "Â +Â $_.Exception.Message);Â Â 
-Â Â Â Â ExitÂ 
-Â }Â 
-Â 
-Â 
+    } 
+    else 
+      { "[Warning]: No ARM VMs found...  Skipping remaining steps."} 
+}  # Subscriptions 
+ 
+"`r`nCompleted!" 
+ 
+# Get End Time 
+$endDTM = (Get-Date) 
+"Stopping Script: {0:yyyy-MM-dd HH:mm}..." -f $endDTM 
+ 
+# Echo Time elapsed 
+"Elapsed Time: $(($endDTM-$startDTM).totalseconds) seconds" 
+ 
+# Catch any unexpected error occurring while running the script 
+trap { 
+    Write-Host "An unexpected error occurred....  Please try again in a few minutes..."   
+    Write-Host $("`Exception: " + $_.Exception.Message);  
+    Exit 
+ } 
+ 
+ 
