@@ -8,7 +8,7 @@ echo "Get Azure VMs Json String from Octopus"
 AzureVMsJson=$(get_octopusvariable "Octopus.Action[Dynamic-VM-Inventory].Output.AzureVMsJson")
 echo "Collect Azure VMs Json File"
 echo $AzureVMsJson > azure.json
-new_octopusartifact azure.json
+new_octopusartifact `pwd`/azure.json azure.json
 
 echo "Generating backend rules config from tags"
 sudo apt-get install python-pip -y
@@ -18,7 +18,7 @@ echo "Generated Backend rules config file"
 
 # Collect a file from the current working directory using the file name as the name of the artifact
 cat rules.toml
-new_octopusartifact rules.toml
+new_octopusartifact `pwd`/rules.toml rules.toml
 
 echo "Create a folder for logs"
 sudo mkdir -p /var/log/traefik
