@@ -8,7 +8,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-User=sysadmin
+User=root
 ExecStart=/opt/traefik/traefik_linux-amd64 --configFile=/etc/traefikconf/traefik.linux-amd64.toml
 
 [Install]

@@ -12,6 +12,11 @@ echo "Generate backend rules config from tags"
 sudo apt install python-pip -y
 pip install Jinja2
 echo $AzureVMsJson | python rules.py > rules.toml
+echo "Backend rules config file"
+cat rules.toml
+
+echo "Create a folder for logs"
+sudo mkdir -p /var/log/traefik
 
 echo "Copy generated configs"
 mkdir -p /etc/traefikconf
@@ -20,6 +25,8 @@ sudo cp traefikconf/traefik.linux-amd64.toml /etc/traefikconf/traefik.linux-amd6
 
 echo "Create systemd config "
 sudo mv traefikconf/traefik.service /etc/systemd/system/traefik.service
+#The unit file, source configuration file or drop-ins of traefik.service changed on disk
+sudo systemctl daemon-reload
 
 echo "Enable systemd service"
 sudo mkdir -p /opt/traefik

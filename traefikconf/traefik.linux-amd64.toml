@@ -44,7 +44,7 @@ debug = true
 		  keyFile = "tls.key"
 	
 [file]
-  filename = "traefikconf/rules.toml"
+  filename = "/etc/traefikconf/rules.toml"
   watch = true
 
 		
@@ -66,14 +66,14 @@ debug = true
 # Optional
 # Default: os.Stdout
 #
-filePath = "log/traefik.log"
+filePath = "/var/log/traefik/traefik.log"
 
 # Format is either "json" or "common".
 #
 # Optional
 # Default: "common"
 #
-format = "json"
+format = "common"
 
 ################################################################
 # Access logs configuration
@@ -93,14 +93,14 @@ format = "json"
 # Optional
 # Default: os.Stdout
 #
-filePath = "log/accesslog.txt"
+filePath = "/var/log/traefik/access.log"
 
 # Format is either "json" or "common".
 #
 # Optional
 # Default: "common"
 #
-format = "json"
+format = "common"
 
 ################################################################
 # API and dashboard configuration
