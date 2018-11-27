@@ -2,18 +2,23 @@
 
 echo "Traefik install and update config"
 pwd
-ls -lisa
 
-echo "Traefik update of backends in accordance to azure tags"
-AzureVMsJson=$(get_octopusvariable "Octopus.Action[Dynamic-VM-Inventory].Output.AzureVMsJson")
+
 echo "Get Azure VMs Json String from Octopus"
+AzureVMsJson=$(get_octopusvariable "Octopus.Action[Dynamic-VM-Inventory].Output.AzureVMsJson")
+echo "Collect Azure VMs Json File"
+echo $AzureVMsJson > azure.json
+new_octopusartifact azure.json
 
-echo "Generate backend rules config from tags"
-sudo apt install python-pip -y
+echo "Generating backend rules config from tags"
+sudo apt-get install python-pip -y
 pip install Jinja2
 echo $AzureVMsJson | python rules.py > rules.toml
-echo "Backend rules config file"
+echo "Generated Backend rules config file"
+
+# Collect a file from the current working directory using the file name as the name of the artifact
 cat rules.toml
+new_octopusartifact rules.toml
 
 echo "Create a folder for logs"
 sudo mkdir -p /var/log/traefik
